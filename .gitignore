@@ -1,0 +1,8 @@
+**/OPPROF*/
+**/dist/
+**/build/
+.DS_Store
+*.log
+*.debug
+*.dump
+
