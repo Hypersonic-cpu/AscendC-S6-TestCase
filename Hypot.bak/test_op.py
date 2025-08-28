@@ -8,36 +8,8 @@ import sys
 
 case_data = {
     'case1': {
-        'input':-1 + 2 * torch.rand(25, dtype=torch.float32),
-        'dim':torch.tensor(0, dtype=torch.int32)
-    }, 
-    'case3': {
-        'input':-1 + 2 * torch.rand(25, dtype=torch.float16),
-        'dim':torch.tensor(0, dtype=torch.int32)
-    }, 
-    'case5': {
-        'input':-1 + 2 * torch.rand(25, dtype=torch.bfloat16),
-        'dim':torch.tensor(0, dtype=torch.int32)
-    }, 
-    'case2': {
-        'input': -1 + 15 * torch.rand(9, 10, 257, dtype=torch.float32),
-        'dim': torch.tensor(1, dtype=torch.int32)
-    },
-    'case4': {
-        'input': -1 + 15 * torch.rand(9, 10, 257, dtype=torch.float16),
-        'dim': torch.tensor(1, dtype=torch.int32)
-    },
-    'case6': {
-        'input': -1 + 15 * torch.rand(9, 10, 257, dtype=torch.bfloat16),
-        'dim': torch.tensor(-1, dtype=torch.int32)
-    },
-#    'case4': {
-#        'input':-1 + 15 * torch.rand(1, 10, 530, 1, dtype=torch.float16),
-#        'dim':torch.tensor(1, dtype=torch.int32)
-#    }, 
-    'case-1': {
-        'input':-1 + 2 * torch.rand(2097152, dtype=torch.float16),
-        'dim':torch.tensor(0, dtype=torch.int32)
+        'input':np.random.uniform(-10, 10, [2048]).astype(np.float16),
+        'other':np.random.uniform(-10, 10, [2048]).astype(np.float16)
     }
 }
 
@@ -51,9 +23,6 @@ def verify_result(real_result, golden):
     a = real_result - golden  # 计算运算结果和预期结果偏差
     rtol_diff = torch.abs(a)   # 计算运算结果和预期结果偏差绝对值
     golden = torch.where(golden == 0, minimum, golden) # 替换0值为10e-10，防止除零错误
-    print("Golden", golden, sep='\n')
-    print("Result", real_result, sep='\n')
-    print("Delta ", a, sep='\n')
     atol_diff = torch.abs(torch.div(a, golden))  # 计算运算结果和预期结果偏差相对误差
     error_result = (rtol_diff > loss) & (atol_diff > loss)  # 计算运算结果和预期结果偏差是否同时超出误差范围
     err_num = torch.sum(error_result == True) # 相对偏差和绝对偏差均超出预期的元素个数
@@ -67,17 +36,19 @@ def verify_result(real_result, golden):
 class TestCustomOP(TestCase):
     def test_custom_op_case(self,num):
         print(num)
-        caseNmae='case'+str(num)
+        caseNmae='case'+str(num) 
         input_x = None
-        dim = 0
-        input_x = case_data[caseNmae]["input"]
-        dim = case_data[caseNmae]["dim"]
+        input_other = None
+        if int(num) == 3 or int(num) == 4:
+            input_x = case_data[caseNmae]["input"]
+            input_other = case_data[caseNmae]["other"]
+        else:
+            input_x = torch.from_numpy(case_data[caseNmae]["input"])
+            input_other = torch.from_numpy(case_data[caseNmae]["other"])
         
-        output = torch.logcumsumexp(input_x, dim)
+        output = torch.hypot(input_x, input_other)
         # 修改输入
-        print("=== Calc Start ===")
-        output_npu = custom_ops_lib.custom_op(input_x.npu(), dim.npu(), int(num))
-        print("=== Calc End ===")
+        output_npu = custom_ops_lib.custom_op(input_x.npu(), input_other.npu())
         if output_npu is None:
             print(f"{caseNmae} execution timed out!")
         else:

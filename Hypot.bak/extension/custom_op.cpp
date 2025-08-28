@@ -23,7 +23,7 @@ at::Tensor my_op_impl_npu(const at::Tensor& input, const at::Tensor& other) {
         outShape.push_back(std::max(input.sizes().data()[i], other.sizes().data()[i]));
     }
     at::Tensor result;
-    auto round = 1 ;
+    auto round = 50 ;
     for (size_t i = 0; i < round; i++)
     {
          result = at::empty(outShape, input.options());

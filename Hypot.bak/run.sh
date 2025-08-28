@@ -20,8 +20,8 @@ if [ "x$1" == "x1" ]; then
 fi
 
 
-   rm -rf OPPROF*
-   timeout 360 msprof op simulator --soc-version=Ascend910B4 python3 test_op.py $1
+   rm -rf PROF*
+   timeout 180  msprof --application="python3 test_op.py $1"
 
    if [ $? -eq 124 ]; then
         echo "timed out!"
